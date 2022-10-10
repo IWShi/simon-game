@@ -1,0 +1,310 @@
+<!doctype HTML>
+<html>
+  <!--Iris Shi's Simon game
+      October 2020-->
+
+  <head>
+    <title>Simon</title>
+
+    <style>
+      #startScreen, #gameboard {
+        text-align: center;
+        width: 100vw;
+        max-width: 100%;
+        height: 100vh;
+        max-height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: palevioletred;
+      }
+
+      #gameboard {
+        background-color: white;
+      }
+
+      .gameBtn {
+        margin: 25px;
+        display: inline-block;
+        height: 200px;
+        width: 200px;
+        border: 10px solid black;
+        border-radius: 20%;
+      }
+
+      .gameBtn:active {
+        transform: translateY(4px);
+      }
+
+      #redBtn {
+        background-color: crimson;
+      }
+
+      #greenBtn {
+        background-color: green;
+      }
+
+      #blueBtn {
+        background-color: darkblue;
+      }
+
+      #yellowBtn {
+        background-color: darkgoldenrod;
+      }
+
+      #easyBtn {
+        background-color: limegreen;
+      }
+
+      #mediumBtn {
+        background-color: orange;
+      }
+
+      #hardBtn {
+        background-color: red;
+      }
+
+      #easyBtn, #mediumBtn, #hardBtn {
+        height: 50px;
+        width: 100px;
+        border: 2px solid black;
+        display: inline-block;
+        margin: 25px;
+      }
+
+      .endGameBtn {
+        height: 50px;
+        width: 250px;
+        margin: 25px;
+        border: 2px solid black;
+        background-color: lightgrey;
+      }
+    </style>
+
+    <script>
+      function startGame(num) {
+        //initializing some variables
+        addPerTurn = num;
+        maxFlashes = MAX_LEVELS * addPerTurn;
+        computerMoves = [];
+        userMoves = [];
+        checkFlash = 0;
+        currentNumFlashes = addPerTurn;
+        currentLevel = 1;
+        goodMoves = true;
+        win = false;
+        computerTurn = true;
+
+        //clear intervals that flash background colors
+        clearInterval(backgroundIntervalId);
+        clearInterval(gameEndIntervalId);
+
+        //reset style and color of various HTML elements
+        document.getElementById("level").style.color = "black";
+        document.getElementById("gameOver").style.display = "none";
+        document.getElementById("gameboard").style.backgroundColor = "white";
+
+        //get rid of start screen and show gameboard
+        document.getElementById("startScreen").style.display = "none";
+        document.getElementById("gameboard").style.display = "";
+
+        //tells user that it's the computer's turn at the start of the game
+        document.getElementById("turn").innerHTML = "WAIT: NOT YOUR TURN";
+
+        //reports starting level and score to user
+        document.getElementById("level").innerHTML = "Current level: " + currentLevel;
+        document.getElementById("score").innerHTML = "Score: 0";
+
+        //create the computer array of moves
+        for (let i = 1; i <= maxFlashes; i++) {
+          computerMoves.push(Math.floor(Math.random() * 4) + 1);
+        }
+        console.log(computerMoves);
+
+        //computer will flash the buttons in the order they are in the array
+        intervalId = setInterval(flashButtons, 800);
+      }
+
+      function restartGame() { //brings user back to start screen
+        document.getElementById("startScreen").style.display = "";
+        document.getElementById("gameboard").style.display = "none";
+      }
+
+      function userClick(aValue) {
+        if (!computerTurn) { //won't let the user click buttons if the computer is currently flashing buttons
+          userMoves.push(aValue);
+          checkUserMoves();
+        }
+      }
+
+      function checkUserMoves() {
+        //check if the move just made is wrong
+        if (userMoves[userMoves.length - 1] != computerMoves[userMoves.length - 1]) {
+          goodMoves = false; //mistake made
+        }
+        //if they have clicked maxFlashes times with no mistakes --> WIN!
+        if (userMoves.length == maxFlashes && goodMoves) {
+          document.getElementById("level").innerHTML = "YOU WIN!";
+          document.getElementById("level").style.color = "forestgreen";
+          document.getElementById("score").innerHTML = "Score: " + currentNumFlashes;
+          document.getElementById("gameOver").style.display = "";
+          document.getElementById("turn").innerHTML = "";
+          document.getElementById("gameboard").style.backgroundColor = "lightgreen";
+          win = true;
+          gameEndColors();
+        }
+        //if *any* mistake --> lose :(
+        if (!goodMoves && !win) { //ensures the "YOU LOSE" message won't appear if you click buttons after having already won
+          document.getElementById("level").innerHTML = "YOU LOSE";
+          document.getElementById("level").style.color = "maroon";
+          document.getElementById("gameOver").style.display = "";
+          document.getElementById("turn").innerHTML = "";
+          document.getElementById("gameboard").style.backgroundColor = "palevioletred";
+          gameEndColors();
+        }
+        //otherwise, computer needs to flash again
+        if (currentNumFlashes == userMoves.length && goodMoves && !win) {
+          document.getElementById("score").innerHTML = "Score: " + currentNumFlashes; //scores are based on the length of the sequence of the colors that the user has gotten right, not on the level
+          currentLevel++;
+          document.getElementById("level").innerHTML = "Current level: " + currentLevel;
+          currentNumFlashes += addPerTurn;
+          userMoves = [];
+          checkFlash = 0;
+          computerTurn = true;
+          document.getElementById("turn").innerHTML = "WAIT: NOT YOUR TURN";
+          intervalId = setInterval(flashButtons, 800);
+        }
+      }
+
+      function flashButtons() { //this function runs nonstop on 800 ms interval
+        if (checkFlash == currentNumFlashes) { //means that the computer has flashed the button the correct number of times for this round
+          clearInterval(intervalId);
+          clearColors();
+          computerTurn = false;
+          document.getElementById("turn").innerHTML = "GO: YOUR TURN";
+        } else {
+          clearColors();
+          setTimeout(flashColor, 200);
+        }
+      }
+
+      function flashColor() {
+        switch (computerMoves[checkFlash]) {
+          case 1: flashRed();
+            break;
+          case 2: flashGreen();
+            break;
+          case 3: flashYellow();
+            break;
+          case 4: flashBlue();
+            break;
+          default:
+            break;
+        }
+        checkFlash++;
+      }
+
+      function flashRed() {
+        document.getElementById("redBtn").style.backgroundColor = "palevioletred";
+      }
+
+      function flashGreen() {
+        document.getElementById("greenBtn").style.backgroundColor = "lightgreen";
+      }
+
+      function flashYellow() {
+        document.getElementById("yellowBtn").style.backgroundColor = "yellow";
+      }
+
+      function flashBlue() {
+        document.getElementById("blueBtn").style.backgroundColor = "lightblue";
+      }
+
+      function clearColors() {
+        document.getElementById("redBtn").style.backgroundColor = "crimson";
+        document.getElementById("greenBtn").style.backgroundColor = "green";
+        document.getElementById("yellowBtn").style.backgroundColor = "darkgoldenrod";
+        document.getElementById("blueBtn").style.backgroundColor = "darkblue";
+      }
+
+      function changeBackground() { //makes background of start screen cycle through four colors
+        let backgroundColors = ["palevioletred", "lightgreen", "yellow", "lightblue"];
+        let i = 1;
+        if (backgroundIntervalId == 1 || backgroundIntervalId == null) { //ensures only one interval can be set at a time, since clearing an interval sets it equal to 1
+          backgroundIntervalId = setInterval(function() { //every interval, i increases by 1, so the color will also change
+            document.getElementById("startScreen").style.backgroundColor = backgroundColors[i % 4]; //i % 4 gives an index in between 0 and 3
+            i++;
+          }, 1500);
+        }
+      }
+
+      function gameEndColors() { //makes the gameboard background cycle through colors when the user wins or loses
+        let gameEndBackground = ["lightgreen", "#65eb65", "palevioletred", "#d94373"]; //the first two colors are for wins, the last two are for losses
+        let add = 0;
+        let i = 1;
+        if (!win) {
+          add = 2;
+        }
+        gameEndIntervalId = setInterval(function() {
+          //if the user wins, add = 0 so i % 2 + add gives indices between 0 and 1
+          //if the user loses, add = 2 so i % 2 + add gives indices between 2 + 3
+          document.getElementById("gameboard").style.backgroundColor = gameEndBackground[i % 2 + add];
+          i++;
+        }, 1000);
+      }
+    </script>
+  </head>
+
+  <body>
+    <!--start screen-->
+    <div id="startScreen" onmouseover="changeBackground()">
+      <h1 style="font-size: 14em; margin: 50px;">Simon Game</h1>
+      <h3 style="font-size: 2em;">Choose a level!</h3>
+      <p><b>EASY</b>: Add 1 color to the sequence each turn<br>
+        <b>MEDIUM</b>: Add 2 colors to the sequence each turn<br>
+        <b>HARD</b>: Add 3 colors to the sequence each turn</p>
+      <button id="easyBtn" onclick="startGame(1)">EASY</button>
+      <button id="mediumBtn" onclick="startGame(2)">MEDIUM</button>
+      <button id="hardBtn" onclick="startGame(3)">HARD</button>
+    </div>
+
+    <!--gameboard setup-->
+    <div id="gameboard" style="display: none;">
+      <h3 id="level" style="font-size: 2em;">Current level: </h3>
+      <h3 id="score" style="font-size: 2em; bottom-margin: 100px;">Score: 0</h3>
+      <div id="row1">
+        <button id="redBtn" class="gameBtn" value="1" onclick="userClick(this.value)"></button>
+        <button id="greenBtn" class="gameBtn" value="2" onclick="userClick(this.value)"></button>
+      </div>
+      <div id="row2">
+        <button id="blueBtn" class="gameBtn" value="4" onclick="userClick(this.value)"></button>
+        <button id="yellowBtn" class="gameBtn" value="3" onclick="userClick(this.value)"></button>
+      </div>
+      <p id="turn" style="font-size: 1.5em; top-margin: 100px;">WAIT: NOT YOUR TURN</p>
+      <div id="gameOver" style="display: none;">
+        <button class="endGameBtn" style="background-color: cornflowerblue;" onclick="startGame(addPerTurn)">REPLAY THIS DIFFICULTY</button>
+        <button class="endGameBtn" style="background-color: lightcoral;" onclick="restartGame()">CHOOSE ANOTHER DIFFICULTY</button>
+      </div>
+    </div>
+
+    <script>
+      //declaring global variables
+      let computerMoves = []; //array to store computer sequence
+      let userMoves = []; //array to store user moves
+      const MAX_LEVELS = 10;
+      let maxFlashes; //maximum number of colors in computerMoves, differs depending on which level of difficulty is chosen by user
+      let intervalId;
+      let backgroundIntervalId;
+      let currentNumFlashes; //current number of flashes
+      let checkFlash; //color of the flash that is being checked at this moment --> gets reset each round
+      let goodMoves;
+      let win;
+      let computerTurn; //indicates if it's computer's turn to flash or user's turn to click buttons
+      let addPerTurn; //how many flashes are added per turn, based on what level of difficulty chosen by user
+      let currentLevel; //tracks how many rounds have gone by
+      let gameEndIntervalId;
+    </script>
+  </body>
+</html>
